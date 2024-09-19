@@ -1,0 +1,23 @@
+#include <WiFi.h>
+//MAC Address: 34:B4:72:4E:CB:74
+void setup() {
+    // Initialize serial communication
+    Serial.begin(115200);
+    while (!Serial) {
+        // Wait for serial port to connect (for native USB)
+        delay(10);
+    }
+
+    // Initialize WiFi (required to access MAC address)
+    WiFi.mode(WIFI_STA);
+    delay(1000); // Give time for WiFi to initialize
+
+    // Get and print the MAC address
+    String macAddress = WiFi.macAddress();
+    Serial.print("MAC Address: ");
+    Serial.println(macAddress);
+}
+
+void loop() {
+    // Nothing to do here
+}
