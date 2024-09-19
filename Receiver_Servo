@@ -1,0 +1,74 @@
+#include <esp_now.h>
+#include <WiFi.h>
+#include <ESP32Servo.h>
+
+// Define two servo objects for X and Y axes
+Servo servoX;
+Servo servoY;
+
+// Data structure to receive from sender
+typedef struct struct_message {
+    int joyX;
+    int joyY;
+} struct_message;
+
+struct_message incomingData;
+
+// Callback function to receive data
+void OnDataRecv(const esp_now_recv_info *info, const uint8_t *data, int len) {
+    if (len == sizeof(incomingData)) {
+        memcpy(&incomingData, data, sizeof(incomingData));  
+
+        // Debugging: Print received data
+        Serial.print("Received X: ");
+        Serial.print(incomingData.joyX);
+        Serial.print(" | Y: ");
+        Serial.println(incomingData.joyY);
+
+        // Map joystick X and Y values to servo angles
+        int servoAngleX = map(incomingData.joyX, 0, 4095, 0, 180);
+        int servoAngleY = map(incomingData.joyY, 0, 4095, 0, 180);
+
+        // Constrain the servo angles within valid range (0 to 180 degrees)
+        servoAngleX = constrain(servoAngleX, 0, 180);
+        //servoAngleY = constrain(servoAngleY, 0, 180);
+
+        // Debugging: Print servo angles
+        Serial.print("Servo X Angle: ");
+        Serial.println(servoAngleX);
+        //Serial.print("Servo Y Angle: ");
+        //Serial.println(servoAngleY);
+
+        // Move the servos
+        servoX.write(servoAngleX);
+        servoY.write(servoAngleY);
+    } else {
+        Serial.println("Received data length mismatch.");
+    }
+}
+
+void setup() {
+    Serial.begin(115200);
+
+    // Set device as a Wi-Fi station
+    WiFi.mode(WIFI_STA);
+
+    // Initialize ESP-NOW
+    if (esp_now_init() != ESP_OK) {
+        Serial.println("Error initializing ESP-NOW");
+        return;
+    }
+
+    // Register for a callback function to receive data
+    esp_now_register_recv_cb(OnDataRecv);
+
+    // Initialize the two servos
+    servoX.attach(1);  // Attach servo X to GPIO 1
+    //servoY.attach(2);  // Attach servo Y to GPIO 2 (or another available pin)
+
+    Serial.println("Receiver is ready to receive data.");
+}
+
+void loop() {
+    delay(100);  // Adjust delay as needed
+}
